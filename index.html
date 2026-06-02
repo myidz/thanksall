@@ -140,21 +140,16 @@
     }
 
     h1 {
-      font-size: clamp(39px, 6vw, 70px);
+      font-size: clamp(28px, 3.2vw, 42px);
       margin-bottom: 16px;
       color: var(--navy);
       letter-spacing: -1px;
+      white-space: nowrap;
     }
 
-    h1 .line-1,
-    h1 .line-2 {
-      display: block;
-    }
-
-    h1 .line-2 {
+    h1 .title-accent {
       color: var(--rose);
       text-shadow: 3px 3px 0 rgba(255, 209, 102, .45);
-      margin-top: 4px;
     }
 
     .subtitle {
@@ -952,7 +947,8 @@
 
       #introScreen {
         min-height: 100vh;
-        align-items: center;
+        align-items: flex-start;
+        padding-top: 18px;
       }
 
       .hero-card {
@@ -967,13 +963,10 @@
       }
 
       h1 {
-        font-size: 32px;
-        line-height: 1.18;
-        letter-spacing: -.6px;
-      }
-
-      h1 .line-2 {
-        margin-top: 2px;
+        font-size: clamp(20px, 5.6vw, 24px);
+        line-height: 1.16;
+        letter-spacing: -.7px;
+        white-space: nowrap;
       }
 
       .badge {
@@ -1234,10 +1227,7 @@
     <div class="hero-card">
       <div class="hero-text">
         <div class="badge">📐 Mathematics X Memories</div>
-        <h1>
-          <span class="line-1">Hadiah Kecil Untuk</span>
-          <span class="line-2">VII-1</span>
-        </h1>
+        <h1>Hadiah Kecil Untuk Kelas <span class="title-accent">VII-1</span></h1>
         <p class="subtitle">
           Ada satu kado kenangan untuk siswa-siswi kelas VII-1 MTsN 2 Nganjuk.
           Bukan soal rumus, tapi tentang cerita belajar, tawa, dan perpisahan.
