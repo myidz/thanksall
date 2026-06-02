@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Thanks VII-1</title>
 
   <style>
@@ -1440,12 +1443,40 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbyHE-sXGxeq9GKAh6HMRZ6_ko6Z1086cK9TcCGBlct3Hp2Ld_r3ziEFM6Ho5LXr94YJZw/exec';
-    const PHOTO_URL = 'images/foto71.jpeg';
-    const LOGO_URL = 'images/logo.jpg';
-    const MUSIC_URL = 'audio/lagu.mpeg';
+    const APP_VERSION = 'vii1-anti-cache-20260603-01';
 
-    let adminToken = localStorage.getItem('adminTokenVii1') || '';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyHE-sXGxeq9GKAh6HMRZ6_ko6Z1086cK9TcCGBlct3Hp2Ld_r3ziEFM6Ho5LXr94YJZw/exec';
+    const PHOTO_URL = 'images/foto71.jpeg?v=' + APP_VERSION;
+    const LOGO_URL = 'images/logo.jpg?v=' + APP_VERSION;
+    const MUSIC_URL = 'audio/lagu.mpeg?v=' + APP_VERSION;
+
+    const ADMIN_TOKEN_KEY = 'adminToken_' + APP_VERSION;
+
+    try {
+      Object.keys(localStorage).forEach(function(key) {
+        if (key.startsWith('adminToken')) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          names.forEach(function(name) {
+            caches.delete(name);
+          });
+        }).catch(function() {});
+      }
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          registrations.forEach(function(registration) {
+            registration.unregister();
+          });
+        }).catch(function() {});
+      }
+    } catch (error) {}
+
+    let adminToken = sessionStorage.getItem(ADMIN_TOKEN_KEY) || '';
     let allMessages = [];
     let refreshTimer = null;
     let namesHidden = false;
@@ -1487,6 +1518,7 @@
 
         query.set('action', action);
         query.set('callback', callbackName);
+        query.set('_nocache', APP_VERSION + '-' + Date.now());
 
         Object.keys(params || {}).forEach(function(key) {
           query.set(key, params[key]);
@@ -1498,7 +1530,7 @@
         const timeoutId = setTimeout(function() {
           cleanup();
           reject(new Error('Koneksi ke database terlalu lama. Cek link API_URL dan deployment Apps Script.'));
-        }, 20000);
+        }, 25000);
 
         window[callbackName] = function(data) {
           clearTimeout(timeoutId);
@@ -1520,6 +1552,18 @@
         }
 
         document.body.appendChild(script);
+      });
+    }
+
+    function apiCallSafe(action, params) {
+      return apiCall(action, params).catch(function(firstError) {
+        return new Promise(function(resolve) {
+          setTimeout(resolve, 900);
+        }).then(function() {
+          return apiCall(action, params);
+        }).catch(function(secondError) {
+          throw new Error(secondError.message || firstError.message || 'Gagal menghubungi server.');
+        });
       });
     }
 
@@ -1590,7 +1634,7 @@
             musicBtn.textContent = '🔇';
           })
           .catch(function () {
-            showToast('Lagu belum bisa diputar. Pastikan file audio/lagu.mp3 sudah diupload.');
+            showToast('Lagu belum bisa diputar. Pastikan file audio/lagu.mpeg sudah diupload.');
           });
       }
     }
@@ -1679,7 +1723,7 @@
         userAgent: navigator.userAgent
       };
 
-      apiCall('save', payload)
+      apiCallSafe('save', payload)
         .then(function(response) {
           submitBtn.disabled = false;
           submitBtn.textContent = 'Kirim pesan kenangan ✨';
@@ -1729,7 +1773,7 @@
       const username = document.getElementById('adminUsername').value;
       const password = document.getElementById('adminPassword').value;
 
-      apiCall('login', {
+      apiCallSafe('login', {
         username: username,
         password: password
       })
@@ -1741,7 +1785,7 @@
 
           if (response.success) {
             adminToken = response.token;
-            localStorage.setItem('adminTokenVii1', adminToken);
+            sessionStorage.setItem(ADMIN_TOKEN_KEY, adminToken);
 
             adminModal.classList.add('hidden');
             openAdminMode();
@@ -1775,7 +1819,7 @@
         messageList.innerHTML = '<div class="empty-state">Memuat data dari spreadsheet...</div>';
       }
 
-      apiCall('messages', {
+      apiCallSafe('messages', {
         token: adminToken
       })
         .then(function(response) {
@@ -1914,6 +1958,14 @@
       document.body.removeChild(link);
 
       URL.revokeObjectURL(url);
+    });
+
+    window.addEventListener('offline', function () {
+      showToast('Koneksi internet terputus. Coba lagi setelah tersambung.');
+    });
+
+    window.addEventListener('online', function () {
+      showToast('Koneksi tersambung lagi.');
     });
 
     createMathBackground();
